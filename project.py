@@ -5,27 +5,30 @@ from sentence_transformers import SentenceTransformer
 from google import generativeai as genai
 from PyPDF2 import PdfReader
 
-# 🌿 1. Gemini API Key
+# API KEY ekleme
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-# 🌿 2. PDF verisini oku
+# PDF veri setini okumak için
 reader = PdfReader("kariyeralanlari.pdf")
 text = ""
 for page in reader.pages:
     text += page.extract_text() + "\n"
 
+# PDF i temize çekmek satırları kaldırmak
 clean_text = (
     text.replace("\n", " ")
     .replace("  ", " ")
     .strip()
 )
 
-# 🌿 3. Text'i ChromaDB'ye yükle
+#vektör veri tabanıyla her bir metni embeddinge dönüştürmek için
 chroma_client = chromadb.Client()
 collection = chroma_client.create_collection(name="kariyer_verisi")
 
+# metileri sayısal vektöre çevirmek için
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
+# bölüm alanlarını ayırmak için ana başlıklara ayırmak için her kaynak yazısından sonra başka metni karakter olarak algılama
 chunks = clean_text.split("Kaynak:")
 for i, chunk in enumerate(chunks):
     if chunk.strip():
@@ -36,16 +39,19 @@ for i, chunk in enumerate(chunks):
             metadatas=[{"role": f"Alan {i}"}]
         )
 
-# 🌿 4. Sorgu için fonksiyon
+# metin ile eşleştirme
 def retrieve_similar_chunks(query, top_k=3):
     query_emb = model.encode([query])
     results = collection.query(query_embeddings=query_emb, n_results=top_k)
     return results['documents'][0]
 
+# cevap oluşturma fonksiyonu
 def generate_response(user_input):
+    # En alakalı içerikleri getir
     related_chunks = retrieve_similar_chunks(user_input)
     context = "\n\n".join(related_chunks)
 
+    # model promptu
     prompt = f"""
     Sen deneyimli bir kariyer danışmanısın.
     Aşağıda endüstri mühendisliği mezunları için hazırlanmış kariyer alanlarıyla ilgili bilgiler yer alıyor:
@@ -60,14 +66,18 @@ def generate_response(user_input):
     Ardından bu alanda gelişmek için 3 pratik öneri sun.
     """
 
+    # gemini modelini çağırma 
     model_gemini = genai.GenerativeModel("models/gemini-2.5-flash")
     response = model_gemini.generate_content(prompt)
+
+    # temiz görüntü için
     return response.text.strip().replace("**", "").replace("###", "")
 
-# 🌿 5. Gradio Arayüzü
+# 🌿 6. gradio arayüzü
 def chatbot_interface(user_input):
     return generate_response(user_input)
 
+# web arayüzü
 interface = gr.Interface(
     fn=chatbot_interface,
     inputs=gr.Textbox(
@@ -85,6 +95,7 @@ interface = gr.Interface(
     description="Kendini tanıt, bot sana en uygun kariyer alanlarını önersin 🌱",
     theme="soft",
 )
+
 
 if __name__ == "__main__":
     interface.launch(share=True)
