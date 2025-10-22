@@ -21,3 +21,6 @@ Ayrıca her öneri için **neden uygun olduğunu açıklar** ve **kişisel geli�
 - **Google Gemini 2.5 Flash** – Metin üretimi  
 - **Gradio** – Web arayüzü  
 - **PyPDF2** ve **dotenv** – Dosya & API yönetimi  
+
+##Proje Linki
+https://huggingface.co/spaces/aychaa/kariyer-danismani
