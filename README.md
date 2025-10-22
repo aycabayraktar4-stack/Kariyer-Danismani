@@ -22,5 +22,5 @@ Ayrıca her öneri için **neden uygun olduğunu açıklar** ve **kişisel geli�
 - **Gradio** – Web arayüzü  
 - **PyPDF2** ve **dotenv** – Dosya & API yönetimi  
 
-##Proje Linki
+## Proje Linki
 https://huggingface.co/spaces/aychaa/kariyer-danismani
